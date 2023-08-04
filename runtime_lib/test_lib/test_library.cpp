@@ -78,7 +78,7 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
   uint64_t packet_id = wr_idx % q->size;
   dispatch_packet_t *shim_pkt =
       (dispatch_packet_t *)(q->base_address_vaddr) + packet_id;
-  air_packet_device_init(shim_pkt, 50); 
+  air_packet_device_init(shim_pkt, 50);
   air_queue_dispatch_and_wait(q, wr_idx, shim_pkt);
 
   // Attaching the queue to the context so we can send more packets if needed
