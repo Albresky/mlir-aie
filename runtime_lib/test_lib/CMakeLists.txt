@@ -16,6 +16,15 @@ target_include_directories(test_lib PRIVATE
     ${LibXAIE_INC_DIR}
 )
 
+# Linking against AIR so we can get access to the runtime functionality
+#if (DEFINED LibXAIE_${target}_DIR)
+
+if (${AIE_RUNTIME_TARGET} STREQUAL "x86_64")
+  message("Linking against AIR runtime at ${MLIR_AIR_DIR}")
+  target_link_libraries(test_lib "${MLIR_AIR_DIR}/build-pcie/runtime_lib/x86_64/airhost/libairhost.a")
+  target_include_directories(test_lib PRIVATE "${MLIR_AIR_DIR}/build-pcie/runtime_lib/x86_64/airhost/include/")
+endif()
+
 # copy header and source files into build area
 set(headers test_library.h memory_allocator.h)
 foreach(basefile ${headers})

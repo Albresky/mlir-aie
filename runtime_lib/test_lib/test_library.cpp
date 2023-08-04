@@ -20,9 +20,14 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <vector>
+
+#define SYSFS_PATH_MAX 63
 
 extern "C" {
 extern aie_libxaie_ctx_t *ctx /* = nullptr*/;
+
+const char vck5000_driver_name[] = "/dev/amdair";
 }
 
 // namespace aie_device {
@@ -41,8 +46,65 @@ void mlir_aie_deinit_libxaie(aie_libxaie_ctx_t *ctx) {
 /// @brief Initialize the device represented by the context.
 /// @param ctx The context
 /// @return Zero on success
-int mlir_aie_init_device(aie_libxaie_ctx_t *ctx) {
+int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
   AieRC RC = XAIE_OK;
+
+#ifdef __x86_64__
+
+  // Want to get rid of this but need it right now -- Need to clean up mlir-air to remove this
+  hsa_status_t hsa_ret = air_get_physical_devices();
+
+  // Discovering agents
+  std::vector<air_agent_t> agents;
+  auto get_agents_ret = air_get_agents(agents);
+
+  if (get_agents_ret != HSA_STATUS_SUCCESS || agents.empty()) {
+    printf("No agents found. Exiting.\n");
+    return -1;
+  }
+
+  // Creating a queue on the first agent that we see
+  queue_t *q = nullptr;
+  auto create_queue_ret =
+      air_queue_create(MB_QUEUE_SIZE, HSA_QUEUE_TYPE_SINGLE, &q, agents[0].handle,
+                       device_id);
+  if(create_queue_ret != 0) {
+    printf("Failed to create queue. Exiting\n");
+    return -1;
+  }
+
+  // Initializing the device
+  uint64_t wr_idx = queue_add_write_index(q, 1);
+  uint64_t packet_id = wr_idx % q->size;
+  dispatch_packet_t *shim_pkt =
+      (dispatch_packet_t *)(q->base_address_vaddr) + packet_id;
+  air_packet_device_init(shim_pkt, 50); 
+  air_queue_dispatch_and_wait(q, wr_idx, shim_pkt);
+
+  // Attaching the queue to the context so we can send more packets if needed
+  ctx->cmd_queue = q;
+
+  // Creating the sysfs path to issue read/write 32 commands
+  char sysfs_path[SYSFS_PATH_MAX + 1];
+  if (snprintf(sysfs_path, SYSFS_PATH_MAX, "/sys/class/amdair/amdair/%02u",
+               device_id) == SYSFS_PATH_MAX)
+    sysfs_path[SYSFS_PATH_MAX] = 0;
+
+  int fda;
+  if ((fda = open(vck5000_driver_name, O_RDWR | O_SYNC)) == -1) {
+    printf("[ERROR] %s failed to open %s\n", __func__, vck5000_driver_name);
+    return -1;
+  }
+
+  // Using the AMDAIR libxaie backend, which utilizes the AMDAIR driver
+  XAie_BackendType backend;
+  ctx->AieConfigPtr.Backend = XAIE_IO_BACKEND_AMDAIR;
+  backend = XAIE_IO_BACKEND_AMDAIR;
+  ctx->AieConfigPtr.BaseAddr = 0;
+  ctx->DevInst.IOInst = (void *)sysfs_path;
+
+#endif
+
 
   RC = XAie_CfgInitialize(&(ctx->DevInst), &(ctx->AieConfigPtr));
   if (RC != XAIE_OK) {
@@ -66,6 +128,15 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx) {
       printf("Failed to finish tiles.\n");
       return -1;
     }
+
+#ifdef __x86_64__
+    // Because we tear this down, need to do it again
+    ctx->AieConfigPtr.Backend = XAIE_IO_BACKEND_AMDAIR;
+    backend = XAIE_IO_BACKEND_AMDAIR;
+    ctx->AieConfigPtr.BaseAddr = 0;
+    ctx->DevInst.IOInst = (void *)sysfs_path;
+#endif
+
     RC = XAie_CfgInitialize(&(ctx->DevInst), &(ctx->AieConfigPtr));
     if (RC != XAIE_OK) {
       printf("Driver initialization failed.\n");

@@ -14,6 +14,14 @@
 #include <stdlib.h>
 #include <xaiengine.h>
 
+// For now, we only link against AIR on the x86 to keep ARM the same
+#ifdef __x86_64__
+#define AIR_PCIE
+#include "air_queue.h"
+#include "air_host.h"
+#include "air.hpp"
+#endif
+
 extern "C" {
 
 #define mlir_aie_check(s, r, v, errors)                                        \
@@ -30,6 +38,9 @@ extern "C" {
 struct aie_libxaie_ctx_t {
   XAie_Config AieConfigPtr;
   XAie_DevInst DevInst;
+#ifdef __x86_64__
+  queue_t *cmd_queue; 
+#endif
 };
 
 // class for using events and PF cpounters
@@ -119,7 +130,7 @@ private:
 aie_libxaie_ctx_t *mlir_aie_init_libxaie();
 void mlir_aie_deinit_libxaie(aie_libxaie_ctx_t *);
 
-int mlir_aie_init_device(aie_libxaie_ctx_t *ctx);
+int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id = 0);
 
 int mlir_aie_acquire_lock(aie_libxaie_ctx_t *ctx, int col, int row, int lockid,
                           int lockval, int timeout);

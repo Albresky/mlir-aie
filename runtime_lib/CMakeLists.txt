@@ -99,6 +99,7 @@ foreach(target ${AIE_RUNTIME_TARGETS})
           -DVITIS_ROOT=${VITIS_ROOT}
           -DVITIS_AIETOOLS_DIR=${VITIS_AIETOOLS_DIR}
           -DSysroot=${Sysroot}
+          -DMLIR_AIR_DIR=${MLIR_AIR_DIR}
       DEPENDS ${testLibDependsOnXaiengine}
       BUILD_ALWAYS true
       STEP_TARGETS clean build install test

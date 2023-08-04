@@ -253,7 +253,7 @@ class flow_runner:
       file_inc_cpp = os.path.join(self.tmpdirname, 'aie_inc.cpp')
       await self.do_call(task, ['aie-translate', '--aie-generate-xaie', file_physical, '-o', file_inc_cpp])
 
-      cmd = ['clang','-std=c++11']
+      cmd = ['clang','-std=c++14']
       if(opts.host_target):
         cmd += ['--target=%s' % opts.host_target]
         if(opts.aiesim and opts.host_target != aiecc.configure.host_architecture):
@@ -273,15 +273,32 @@ class flow_runner:
           cmd += ['--gcc-toolchain=%s/usr' % opts.sysroot]
 
       thispath = os.path.dirname(os.path.realpath(__file__))
-      runtime_xaiengine_path = os.path.join(thispath, '..','..','runtime_lib', opts.host_target.split('-')[0], 'xaiengine')
-      xaiengine_include_path = os.path.join(runtime_xaiengine_path, "include")
-      xaiengine_lib_path = os.path.join(runtime_xaiengine_path, "lib")
+
+      # We can have differnet libxaie targets and need to point to the proper one
+      if (opts.host_target.split('-')[0] == 'x86_64'):
+        runtime_xaiengine_path = os.path.join(aiecc.configure.libxaie_x86_dir)
+        xaiengine_include_path = os.path.join(runtime_xaiengine_path, "include")
+        xaiengine_lib_path = os.path.join(runtime_xaiengine_path, "lib")
+      else:
+        runtime_xaiengine_path = os.path.join(thispath, '..','..','runtime_lib', opts.host_target.split('-')[0], 'xaiengine')
+        xaiengine_include_path = os.path.join(runtime_xaiengine_path, "include")
+        xaiengine_lib_path = os.path.join(runtime_xaiengine_path, "lib")
+      
+      # Adding the runtime test library, which will always be in the same spot
       runtime_testlib_path = os.path.join(thispath, '..','..','runtime_lib', opts.host_target.split('-')[0], 'test_lib', 'lib')
       memory_allocator = os.path.join(runtime_testlib_path, 'libmemory_allocator_ion.a')
 
       cmd += [memory_allocator]
       cmd += ['-I%s' % xaiengine_include_path]
       cmd += ['-L%s' % xaiengine_lib_path]
+      cmd += ["-Wl,-R%s" % xaiengine_lib_path]
+
+      if(opts.host_target.split('-')[0] == 'x86_64'):
+        mlir_air_include_path = os.path.join(aiecc.configure.mlir_air_dir, "build-pcie", "runtime_lib", "x86_64", "airhost", "include");
+        mlir_air_lib_path = os.path.join(aiecc.configure.mlir_air_dir, "build-pcie", "runtime_lib", "x86_64", "airhost");
+        cmd += ['-I%s' % mlir_air_include_path]
+        cmd += ['-L%s' % mlir_air_lib_path]
+        cmd += ['-lairhost']
 
       cmd += ['-I%s' % self.tmpdirname]
       cmd += ['-fuse-ld=lld','-lm','-lxaiengine']
