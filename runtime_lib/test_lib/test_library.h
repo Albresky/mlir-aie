@@ -17,9 +17,9 @@
 // For now, we only link against AIR on the x86 to keep ARM the same
 #ifdef __x86_64__
 #define AIR_PCIE
-#include "air_queue.h"
-#include "air_host.h"
 #include "air.hpp"
+#include "air_host.h"
+#include "air_queue.h"
 #endif
 
 extern "C" {
@@ -39,7 +39,7 @@ struct aie_libxaie_ctx_t {
   XAie_Config AieConfigPtr;
   XAie_DevInst DevInst;
 #ifdef __x86_64__
-  queue_t *cmd_queue; 
+  queue_t *cmd_queue;
 #endif
 };
 

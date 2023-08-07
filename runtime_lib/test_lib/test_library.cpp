@@ -51,7 +51,8 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
 
 #ifdef __x86_64__
 
-  // Want to get rid of this but need it right now -- Need to clean up mlir-air to remove this
+  // Want to get rid of this but need it right now -- Need to clean up mlir-air
+  // to remove this
   hsa_status_t hsa_ret = air_get_physical_devices();
 
   // Discovering agents
@@ -65,10 +66,9 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
 
   // Creating a queue on the first agent that we see
   queue_t *q = nullptr;
-  auto create_queue_ret =
-      air_queue_create(MB_QUEUE_SIZE, HSA_QUEUE_TYPE_SINGLE, &q, agents[0].handle,
-                       device_id);
-  if(create_queue_ret != 0) {
+  auto create_queue_ret = air_queue_create(MB_QUEUE_SIZE, HSA_QUEUE_TYPE_SINGLE,
+                                           &q, agents[0].handle, device_id);
+  if (create_queue_ret != 0) {
     printf("Failed to create queue. Exiting\n");
     return -1;
   }
@@ -104,7 +104,6 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
   ctx->DevInst.IOInst = (void *)sysfs_path;
 
 #endif
-
 
   RC = XAie_CfgInitialize(&(ctx->DevInst), &(ctx->AieConfigPtr));
   if (RC != XAIE_OK) {
