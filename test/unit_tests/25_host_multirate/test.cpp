@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 #ifdef AIR_PCIE
   mlir_aie_external_set_addr_ddr_test_buffer_in(buf0.physicalAddr);
   mlir_aie_external_set_addr_ddr_test_buffer_out(buf1.physicalAddr);
-#elif
+#else
   mlir_aie_external_set_addr_ddr_test_buffer_in((u64)mem_ptr_in);
   mlir_aie_external_set_addr_ddr_test_buffer_out((u64)mem_ptr_out);
 #endif

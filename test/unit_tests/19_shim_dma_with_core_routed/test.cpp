@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 #ifdef AIR_PCIE
     mlir_aie_external_set_addr_input_buffer(buf0.physicalAddr);
     mlir_aie_external_set_addr_output_buffer(buf1.physicalAddr);
-#elif
+#else
     mlir_aie_external_set_addr_input_buffer((u64)ddr_ptr_in);
     mlir_aie_external_set_addr_output_buffer((u64)ddr_ptr_out);
 #endif

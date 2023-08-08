@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef AIR_PCIE
   mlir_aie_external_set_addr_input_buffer(buf0.physicalAddr);
-#elif
+#else
   mlir_aie_external_set_addr_input_buffer((u64)ddr_ptr_in);
 #endif
   mlir_aie_configure_shimdma_70(_xaie);
