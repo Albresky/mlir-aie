@@ -43,8 +43,13 @@ int main(int argc, char *argv[]) {
   int *mem_ptr_in_0 = mlir_aie_mem_alloc(buf0, 32);
   int *mem_ptr_in_1 = mlir_aie_mem_alloc(buf1, 32);
 
+#ifdef AIR_PCIE
+  mlir_aie_external_set_addr_ext_buffer_in_0(buf0.physicalAddr);
+  mlir_aie_external_set_addr_ext_buffer_in_1(buf1.physicalAddr);
+#elif
   mlir_aie_external_set_addr_ext_buffer_in_0((u64)mem_ptr_in_0);
   mlir_aie_external_set_addr_ext_buffer_in_1((u64)mem_ptr_in_1);
+#endif
   mlir_aie_configure_shimdma_20(_xaie);
 
   int errors = 0;

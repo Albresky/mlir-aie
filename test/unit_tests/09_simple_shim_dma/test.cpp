@@ -49,7 +49,11 @@ main(int argc, char *argv[])
     mlir_aie_write_buffer_buf72_0(_xaie, i, 0xdeadbeef);
   }
 
+#ifdef AIR_PCIE
+  mlir_aie_external_set_addr_buffer(buf0.physicalAddr);
+#elif
   mlir_aie_external_set_addr_buffer((u64)mem_ptr);
+#endif
   mlir_aie_configure_shimdma_70(_xaie);
 
   printf("\nAfter configure shimDMAs:\n");

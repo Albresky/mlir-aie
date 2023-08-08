@@ -46,7 +46,11 @@ int main(int argc, char *argv[]) {
   }
   mlir_aie_sync_mem_dev(buf0);
 
+#ifdef AIR_PCIE
+  mlir_aie_external_set_addr_input_buffer(buf0.physicalAddr);
+#elif
   mlir_aie_external_set_addr_input_buffer((u64)ddr_ptr_in);
+#endif
   mlir_aie_configure_shimdma_70(_xaie);
 
   // We're going to stamp over the memory

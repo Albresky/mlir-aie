@@ -114,8 +114,13 @@ main(int argc, char *argv[])
     mlir_aie_sync_mem_dev(buf0);
     mlir_aie_sync_mem_dev(buf1);
 
+#ifdef AIR_PCIE
+    mlir_aie_external_set_addr_input_buffer(buf0.physicalAddr);
+    mlir_aie_external_set_addr_output_buffer(buf1.physicalAddr);
+#elif
     mlir_aie_external_set_addr_input_buffer((u64)ddr_ptr_in);
     mlir_aie_external_set_addr_output_buffer((u64)ddr_ptr_out);
+#endif
     mlir_aie_configure_shimdma_70(_xaie);
 
     mlir_aie_clear_tile_memory(_xaie, 7, 3);
