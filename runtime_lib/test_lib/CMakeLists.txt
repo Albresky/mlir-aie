@@ -68,6 +68,21 @@ install(TARGETS memory_allocator_ion
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_PREFIX}/runtime_lib/${AIE_RUNTIME_TARGET}/test_lib/include
 )
 
+if (${AIE_RUNTIME_TARGET} STREQUAL "x86_64")
+  # AIR Memory Allocator
+  add_library(memory_allocator_air STATIC memory_allocator_air.cpp)
+  set_target_properties(memory_allocator_air PROPERTIES PUBLIC_HEADER "memory_allocator.h")
+  target_compile_options(memory_allocator_air PRIVATE -fPIC)
+  target_compile_definitions(memory_allocator_air PRIVATE)
+  target_link_libraries(memory_allocator_air "${MLIR_AIR_DIR}/build-pcie/runtime_lib/x86_64/airhost/libairhost.a")
+  target_include_directories(memory_allocator_air PRIVATE "${MLIR_AIR_DIR}/build-pcie/runtime_lib/x86_64/airhost/include/")
+  
+  install(TARGETS memory_allocator_air
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/runtime_lib/${AIE_RUNTIME_TARGET}/test_lib/lib
+      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_PREFIX}/runtime_lib/${AIE_RUNTIME_TARGET}/test_lib/include
+  )
+endif()
+
 if (VITIS_ROOT)
     add_library(memory_allocator_sim_aie STATIC memory_allocator.cpp)
     target_compile_options(memory_allocator_sim_aie PRIVATE -fPIC)

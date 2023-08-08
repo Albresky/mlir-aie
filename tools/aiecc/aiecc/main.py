@@ -286,7 +286,11 @@ class flow_runner:
       
       # Adding the runtime test library, which will always be in the same spot
       runtime_testlib_path = os.path.join(thispath, '..','..','runtime_lib', opts.host_target.split('-')[0], 'test_lib', 'lib')
-      memory_allocator = os.path.join(runtime_testlib_path, 'libmemory_allocator_ion.a')
+
+      if (opts.host_target.split('-')[0] == 'x86_64'):
+        memory_allocator = os.path.join(runtime_testlib_path, 'libmemory_allocator_air.a')
+      else: 
+        memory_allocator = os.path.join(runtime_testlib_path, 'libmemory_allocator_ion.a')
 
       cmd += [memory_allocator]
       cmd += ['-I%s' % xaiengine_include_path]

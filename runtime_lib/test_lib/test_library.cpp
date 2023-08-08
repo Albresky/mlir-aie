@@ -103,6 +103,8 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
   ctx->AieConfigPtr.BaseAddr = 0;
   ctx->DevInst.IOInst = (void *)sysfs_path;
 
+  // Initialize the device memory allocator
+  air_init_dev_mem_allocator(0x20000);
 #endif
 
   RC = XAie_CfgInitialize(&(ctx->DevInst), &(ctx->AieConfigPtr));
