@@ -40,7 +40,7 @@ int *mlir_aie_mem_alloc(ext_mem_model_t &handle, int size) {
 #endif
 }
 
-/*  
+/*
   The device memory allocator directly maps device memory over
   PCIe MMIO. These accesses are uncached and thus don't require
   explicit synchronization between the host and device

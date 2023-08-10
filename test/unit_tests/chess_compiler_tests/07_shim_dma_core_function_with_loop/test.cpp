@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 
     mlir_aie_print_shimdma_status(_xaie, 7, 0);
 
-#ifdef __AIESIM__ 
+#ifdef __AIESIM__
     mlir_aie_external_set_addr_input_buffer(buf0.physicalAddr);
     mlir_aie_external_set_addr_output_buffer(buf1.physicalAddr);
 #else

@@ -113,7 +113,7 @@ main(int argc, char *argv[])
     mlir_aie_sync_mem_dev(buf0);
     mlir_aie_sync_mem_dev(buf1);
 
-#ifdef __AIESIM__ 
+#ifdef __AIESIM__
     mlir_aie_external_set_addr_input_buffer(buf0.physicalAddr);
     mlir_aie_external_set_addr_output_buffer(buf1.physicalAddr);
 #else
