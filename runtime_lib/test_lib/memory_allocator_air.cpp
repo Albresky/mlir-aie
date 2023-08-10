@@ -1,5 +1,4 @@
-//===- memory_allocator_air.cpp ----------------------------------*- C++
-//-*-===//
+//===- memory_allocator_air.cpp ---------------------------------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -41,6 +40,11 @@ int *mlir_aie_mem_alloc(ext_mem_model_t &handle, int size) {
 #endif
 }
 
+/*  
+  The device memory allocator directly maps device memory over
+  PCIe MMIO. These accesses are uncached and thus don't require
+  explicit synchronization between the host and device
+*/
 void mlir_aie_sync_mem_cpu(ext_mem_model_t &handle) {}
 
 void mlir_aie_sync_mem_dev(ext_mem_model_t &handle) {}

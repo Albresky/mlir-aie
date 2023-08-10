@@ -27,7 +27,7 @@
 extern "C" {
 extern aie_libxaie_ctx_t *ctx /* = nullptr*/;
 
-const char vck5000_driver_name[] = "/dev/amdair";
+const char driver_name[] = "/dev/amdair";
 }
 
 // namespace aie_device {
@@ -91,8 +91,8 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
     sysfs_path[SYSFS_PATH_MAX] = 0;
 
   int fda;
-  if ((fda = open(vck5000_driver_name, O_RDWR | O_SYNC)) == -1) {
-    printf("[ERROR] %s failed to open %s\n", __func__, vck5000_driver_name);
+  if ((fda = open(driver_name, O_RDWR | O_SYNC)) == -1) {
+    printf("[ERROR] %s failed to open %s\n", __func__, driver_name);
     return -1;
   }
 
@@ -103,7 +103,8 @@ int mlir_aie_init_device(aie_libxaie_ctx_t *ctx, uint32_t device_id) {
   ctx->AieConfigPtr.BaseAddr = 0;
   ctx->DevInst.IOInst = (void *)sysfs_path;
 
-  // Initialize the device memory allocator
+  // Initialize the device memory allocator with the size of device
+  // memory pool that we are allocating from
   air_init_dev_mem_allocator(0x20000);
 #endif
 
@@ -664,7 +665,7 @@ void mlir_aie_print_shimdma_status(aie_libxaie_ctx_t *ctx, int col, int row) {
     // XAie_Read32(&(ctx->DevInst), underflowAddr, &underflow);
     printf(" overflow?:%x underflow?:%x\n", overflow, underflow);
   } else {
-    XAie_Read32(&(ctx->DevInst), tileAddr + 0x0001EF00, &locks);
+    XAie_Read32(&(ctx->DevInst), tileAddr + 0x00014F00, &locks);
     printf("ShimDMA [%d, %d] AIE1 locks are %08X\n", col, row, locks);
     for (int lock = 0; lock < 16; lock++) {
       u32 two_bits = (locks >> (lock * 2)) & 0x3;
