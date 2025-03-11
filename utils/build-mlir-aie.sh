@@ -32,8 +32,12 @@ echo "LLVM BUILD DIR: $LLVM_BUILD_DIR"
 
 BUILD_DIR=${2:-"build"}
 INSTALL_DIR=${3:-"install"}
-BUILD_TARGET=${4:-"x86_64"}
+
+TARGETS=("x86_64" "aarch64")
 LLVM_ENABLE_RTTI=${LLVM_ENABLE_RTTI:OFF}
+
+HSA_DIR=${ROCM_ROOT}/lib/cmake/hsa-runtime64
+HSAKMT_DIR=${ROCM_ROOT}/lib/cmake/hsakmt
 
 mkdir -p $BUILD_DIR
 mkdir -p $INSTALL_DIR
@@ -41,31 +45,45 @@ cd $BUILD_DIR
 set -o pipefail
 set -e
 
-CMAKE_CONFIGS="\
-    -GNinja \
-    -DLLVM_DIR=${LLVM_BUILD_DIR}/lib/cmake/llvm \
-    -DMLIR_DIR=${LLVM_BUILD_DIR}/lib/cmake/mlir \
-    -DCMAKE_MODULE_PATH=${CMAKEMODULES_DIR}/modulesXilinx \
-    -DCMAKE_INSTALL_PREFIX="../${INSTALL_DIR}" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON \
-    -DCMAKE_VISIBILITY_INLINES_HIDDEN=ON \
-    -DCMAKE_C_VISIBILITY_PRESET=hidden \
-    -DCMAKE_CXX_VISIBILITY_PRESET=hidden \
-    -DLLVM_ENABLE_ASSERTIONS=ON \
-    -DLLVM_ENABLE_RTTI=$LLVM_ENABLE_RTTI \
-    -DAIE_RUNTIME_TARGETS=$BUILD_TARGET \
-    -DAIE_ENABLE_PYTHON_PASSES=OFF \
-    -DAIE_RUNTIME_TEST_TARGET=$BUILD_TARGET"
+for BUILD_TARGET in "${TARGETS[@]}"; do
+    echo "Building for target: $BUILD_TARGET"
 
-if [ -x "$(command -v lld)" ]; then
-  CMAKE_CONFIGS="${CMAKE_CONFIGS} -DLLVM_USE_LINKER=lld"
-fi
+    TARGET_BUILD_DIR="${BUILD_DIR}"
+    mkdir -p $TARGET_BUILD_DIR
+    cd $TARGET_BUILD_DIR
 
-if [ -x "$(command -v ccache)" ]; then
-  CMAKE_CONFIGS="${CMAKE_CONFIGS} -DLLVM_CCACHE_BUILD=ON"
-fi
+    CMAKE_CONFIGS="\
+        -GNinja \
+        -DCMAKE_C_COMPILER=/usr/bin/clang-19 \
+        -DCMAKE_CXX_COMPILER=/usr/bin/clang++-19 \
+        -DLLVM_DIR=${LLVM_BUILD_DIR}/lib/cmake/llvm \
+        -DMLIR_DIR=${LLVM_BUILD_DIR}/lib/cmake/mlir \
+        -DCMAKE_MODULE_PATH=${CMAKEMODULES_DIR}/modulesXilinx \
+        -DCMAKE_INSTALL_PREFIX="../../${INSTALL_DIR}" \
+        -Dhsa-runtime64_DIR=${HSA_DIR} \
+        -Dhsakmt_DIR=${HSAKMT_DIR} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON \
+        -DCMAKE_VISIBILITY_INLINES_HIDDEN=ON \
+        -DCMAKE_C_VISIBILITY_PRESET=hidden \
+        -DCMAKE_CXX_VISIBILITY_PRESET=hidden \
+        -DLLVM_ENABLE_ASSERTIONS=ON \
+        -DLLVM_ENABLE_RTTI=$LLVM_ENABLE_RTTI \
+        -DAIE_RUNTIME_TARGETS=$BUILD_TARGET \
+        -DAIE_ENABLE_PYTHON_PASSES=OFF \
+        -DAIE_RUNTIME_TEST_TARGET=$BUILD_TARGET"
 
-cmake $CMAKE_CONFIGS .. 2>&1 | tee cmake.log
-ninja 2>&1 | tee ninja.log
-ninja install 2>&1 | tee ninja-install.log
+    if [ -x "$(command -v lld)" ]; then
+        CMAKE_CONFIGS="${CMAKE_CONFIGS} -DLLVM_USE_LINKER=lld"
+    fi
+
+    if [ -x "$(command -v ccache)" ]; then
+        CMAKE_CONFIGS="${CMAKE_CONFIGS} -DLLVM_CCACHE_BUILD=ON"
+    fi
+
+    cmake $CMAKE_CONFIGS ../.. 2>&1 | tee cmake_${BUILD_TARGET}.log
+    ninja 2>&1 | tee ninja_${BUILD_TARGET}.log
+    ninja install 2>&1 | tee ninja-install_${BUILD_TARGET}.log
+
+    cd ..
+done
